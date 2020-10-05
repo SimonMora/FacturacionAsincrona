@@ -3,7 +3,6 @@ package com.luminas.facturacion.service;
 import com.luminas.facturacion.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
@@ -17,36 +16,32 @@ import java.util.concurrent.ThreadLocalRandom;
 @Service("facturaServiceImpl")
 public class FacturaServiceImpl implements FacturaService {
 
+    private static final String OPERACION_CREDITO = "crédito";
+    private static final String OPERACION_FACTURA = "facturación";
+
     @Override
     public ResponseEntity<List<Factura>> generadorDeFacturas(Pedido[] pedidos){
-        HashMap<String,Float> ivaValues = new HashMap<String, Float>();
-        ivaValues.put("A", 10.05f);
-        ivaValues.put("B",21f);
-        ivaValues.put("X",70f);
+
         List<Factura> facturas = new ArrayList<>();
         try {
             Arrays.stream(pedidos).forEach(pedido -> {
                 System.out.println(Thread.currentThread().getId());
                 Factura factura = new Factura();
-                factura.setCabeceraFactura(this.configurarCabecera(pedido.getCliente()));
 
-                Producto[] productos = pedido.getDetalles();
+                Cabecera cabecera = this.configurarCabecera(pedido.getCliente());
+                HashMap<String,Double> relacionesPrecioProducto = this.calcularPrecioProducto(pedido);
+                double precioNeto = this.calcularPrecioNeto(relacionesPrecioProducto, pedido.getDetalles());
+                float iva = this.calcularIva(cabecera.getLetra());
+                double precioVenta = this.calcularPrecioDeVenta(iva,precioNeto);
+                double montoIva = precioVenta - precioNeto;
 
-                Producto productoActual = Arrays.stream(pedido.getDetalles()).findFirst().get();
-                long cantidad = Arrays.stream(pedido.getDetalles()).filter(productoLista -> productoActual.getCodigo() == productoLista.getCodigo()).count();
-                float iva = this.calcularIva(factura.getCabeceraFactura().getLetra());
-                double precioUnitario = productoActual.getPrecio();
 
-
-                factura.setProducto(productoActual);
-                factura.setPrecioUnitario(precioUnitario);
-                factura.setCantidad(cantidad);
+                factura.setCabeceraFactura(cabecera);
+                factura.setCantidad(pedido.getDetalles().length);
                 factura.setIva(iva);
-
-                factura.setPrecioNeto(this.calcularPrecioNeto(cantidad,precioUnitario));
-                factura.setPrecioVenta(this.calcularPrecioDeVenta(iva,this.calcularPrecioNeto(cantidad,precioUnitario)));
-
-                double montoIva = factura.getPrecioVenta() - factura.getPrecioNeto();
+                factura.setProductoPrecioUnitario(relacionesPrecioProducto);
+                factura.setPrecioNeto(precioNeto);
+                factura.setPrecioVenta(precioVenta);
                 factura.setMontoIva(montoIva);
 
                 Pie pie = new Pie();
@@ -56,8 +51,7 @@ public class FacturaServiceImpl implements FacturaService {
 
                 facturas.add(factura);
 
-                this.escribirEnArchivo(factura.getCabeceraFactura(), "facturación",factura.getPrecioVenta());
-
+                this.escribirEnArchivo(factura.getCabeceraFactura(), factura.getPrecioVenta(), this.OPERACION_FACTURA);
             });
         } catch (Exception e){
             e.printStackTrace();
@@ -78,8 +72,7 @@ public class FacturaServiceImpl implements FacturaService {
                 Pie pie = new Pie();
                 pie.setTotal(factura.getPrecioVenta());
 
-
-                this.escribirEnArchivo(notaCredito.getCabeceraNotaCredito(), "crédito", factura.getPrecioVenta());
+                this.escribirEnArchivo(notaCredito.getCabeceraNotaCredito(),  factura.getPrecioVenta(),this.OPERACION_CREDITO);
 
             });
         }catch (Exception e){
@@ -96,8 +89,22 @@ public class FacturaServiceImpl implements FacturaService {
         }
     }
 
-    private double calcularPrecioNeto(long cantidad,double precioUnitario){
-        return cantidad * precioUnitario;
+    private HashMap<String,Double> calcularPrecioProducto(Pedido pedido){
+        HashMap<String,Double> precioProducto = new HashMap<>();
+        Producto[] productos = pedido.getDetalles();
+        for(Producto producto : productos){
+            precioProducto.put(producto.getNombre(),producto.getPrecio());
+        }
+        return precioProducto;
+    }
+
+    private double calcularPrecioNeto(HashMap<String,Double> relacionesPrecioProducto,Producto[] productos){
+        double precioNeto = 0;
+        for(String nombre : relacionesPrecioProducto.keySet()){
+            long cantidad = Arrays.stream(productos).filter(producto -> nombre == producto.getNombre()).count();
+            precioNeto += cantidad * relacionesPrecioProducto.get(nombre);
+        }
+        return precioNeto;
     }
 
     private double calcularPrecioDeVenta(float iva, double precioNeto){
@@ -121,7 +128,7 @@ public class FacturaServiceImpl implements FacturaService {
         return cabecera;
     }
 
-    private void escribirEnArchivo(Cabecera cabecera, String tipoDeOperación, double total) {
+    private void escribirEnArchivo(Cabecera cabecera, double total, String tipoDeOperación) {
         try{
 
             Date date = new Date();

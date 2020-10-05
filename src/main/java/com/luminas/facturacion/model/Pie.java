@@ -19,4 +19,12 @@ public class Pie {
     public void setTotalIva(double totalIva) {
         this.totalIva = totalIva;
     }
+
+    @Override
+    public String toString() {
+        return "Pie{" +
+                "total=" + total +
+                ", totalIva=" + totalIva +
+                '}';
+    }
 }

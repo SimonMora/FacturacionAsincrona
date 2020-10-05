@@ -3,7 +3,7 @@ package com.luminas.facturacion.model;
 public class Producto {
     private long codigo;
     private String nombre;
-    private long precio;
+    private double precio;
 
     public Producto() {
     }
@@ -24,11 +24,11 @@ public class Producto {
         this.nombre = nombre;
     }
 
-    public long getPrecio() {
+    public double getPrecio() {
         return precio;
     }
 
-    public void setPrecio(long precio) {
+    public void setPrecio(double precio) {
         this.precio = precio;
     }
 

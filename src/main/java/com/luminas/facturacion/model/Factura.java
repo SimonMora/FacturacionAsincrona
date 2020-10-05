@@ -1,13 +1,14 @@
 package com.luminas.facturacion.model;
 
+import java.util.HashMap;
+
 public class Factura {
     private Cabecera cabeceraFactura;
-    private Producto producto;
-    private double precioUnitario;
+    private HashMap<String, Double> productoPrecioUnitario;
     private float iva;
     private long cantidad;
-    private double precioVenta;
     private double precioNeto;
+    private double precioVenta;
     private double montoIva;
     private Pie pieFactura;
 
@@ -22,20 +23,12 @@ public class Factura {
         this.cabeceraFactura = cabeceraFactura;
     }
 
-    public Producto getProducto() {
-        return producto;
+    public HashMap<String, Double> getProductoPrecioUnitario() {
+        return productoPrecioUnitario;
     }
 
-    public void setProducto(Producto producto) {
-        this.producto = producto;
-    }
-
-    public double getPrecioUnitario() {
-        return precioUnitario;
-    }
-
-    public void setPrecioUnitario(double precioUnitario) {
-        this.precioUnitario = precioUnitario;
+    public void setProductoPrecioUnitario(HashMap<String, Double> productoPrecioUnitario) {
+        this.productoPrecioUnitario = productoPrecioUnitario;
     }
 
     public float getIva() {
@@ -90,12 +83,11 @@ public class Factura {
     public String toString() {
         return "Factura{" +
                 "cabeceraFactura=" + cabeceraFactura +
-                ", producto=" + producto +
-                ", precioUnitario=" + precioUnitario +
+                ", productoPrecioUnitario=" + productoPrecioUnitario +
                 ", iva=" + iva +
                 ", cantidad=" + cantidad +
-                ", precioVenta=" + precioVenta +
                 ", precioNeto=" + precioNeto +
+                ", precioVenta=" + precioVenta +
                 ", montoIva=" + montoIva +
                 ", pieFactura=" + pieFactura +
                 '}';

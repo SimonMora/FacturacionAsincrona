@@ -1,7 +1,5 @@
 package com.luminas.facturacion.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDate;
 
 public class Cabecera {
@@ -49,5 +47,16 @@ public class Cabecera {
 
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+    @Override
+    public String toString() {
+        return "Cabecera{" +
+                "fecha=" + fecha +
+                ", numero=" + numero +
+                ", talon=" + talon +
+                ", letra='" + letra + '\'' +
+                ", cliente=" + cliente +
+                '}';
     }
 }
